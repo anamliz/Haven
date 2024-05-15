@@ -8,6 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.8.1 
 	github.com/spf13/viper v1.18.2 
     gopkg.in/natefinch/lumberjack.v2 v2.2.1 
+	
     
 )
 
@@ -31,4 +32,7 @@ require (
 	golang.org/x/text v0.15.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	github.com/anamliz/Haven/internal/domains/client/polldata v1.2.3
+    github.com/anamliz/Haven/internal/domains/pollData v1.2.3
+    github.com/anamliz/Haven/internal/domains/pollData/pollDataMysql v1.2.3
 )
