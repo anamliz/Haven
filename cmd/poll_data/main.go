@@ -15,7 +15,8 @@ import (
 	
 	
     
-	 "github.com/go-sql-driver/mysql"
+	 _"github.com/go-sql-driver/mysql"
+	"github.com/fsnotify/fsnotify"
 	"github.com/anamliz/Haven/internal/services/pollData"
 	"github.com/spf13/viper"
 	"gopkg.in/natefinch/lumberjack.v2"
