@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/anamliz/Haven/internal/domains/client/polldata"
-	"github.com/anamliz/Haven/internal/domains/pollData"
-	pollDataMysql "github.com/anamliz/Haven/internal/domains/pollData/pollDataMysql"
+	           "github.com/anamliz/Haven/internal/domains/client/polldata"
+	            "github.com/anamliz/Haven/internal/domains/pollData"
+	pollDataMysql "github.com/anamliz/Haven/internal/domains/pollData/pollDataMysql" 
+
 )
 
 // PollDataServicesConfiguration is an alias for a function that will take in a pointer to a PollDataService and modify it
@@ -20,15 +21,17 @@ type PollDataService struct {
 	pollMysql pollData.PollDataRepository
 }
 
-// Data represents data retrieved from an external API
 type Data struct {
 	RawData string
 }
 
-// NewPollDataService instantiates every connection needed to run the PollData service
+// NewPollDataService : instantiate every connection we need to run season service
 func NewPollDataService(cfgs ...PollDataServicesConfiguration) (*PollDataService, error) {
+	// Create the PollDataService
 	os := &PollDataService{}
+	// Apply all Configurations passed in
 	for _, cfg := range cfgs {
+		// Pass the service into the configuration function
 		err := cfg(os)
 		if err != nil {
 			return nil, err
@@ -37,9 +40,10 @@ func NewPollDataService(cfgs ...PollDataServicesConfiguration) (*PollDataService
 	return os, nil
 }
 
-// WithMysqlPollDataRepository instantiates MySQL to connect to the matches interface
+// WithMysqlPollDataRepository : instantiates mysql to connect to matches interface
 func WithMysqlPollDataRepository(connectionString string) PollDataServicesConfiguration {
 	return func(os *PollDataService) error {
+		// Create PollData repository
 		d, err := pollDataMysql.New(connectionString)
 		if err != nil {
 			return err
@@ -49,8 +53,9 @@ func WithMysqlPollDataRepository(connectionString string) PollDataServicesConfig
 	}
 }
 
-// PollData processes live scores
+// PollData : processes accommodation
 func (s *PollDataService) PollData(ctx context.Context, pollDataEndPoint string, timeouts time.Duration, client *http.Client) error {
+	// Poll Data from external API
 	d, err := polldata.New(pollDataEndPoint, timeouts, client)
 	if err != nil {
 		return err
@@ -58,24 +63,30 @@ func (s *PollDataService) PollData(ctx context.Context, pollDataEndPoint string,
 
 	data, err := d.GetData(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to fetch data: %v", err)
+		return fmt.Errorf("Unable to fetch data | %v", err)
 	}
 
-	for _, d := range data.Data {
+	for _, d := range data {
 		log.Printf("*** ID: %s | Name: %s ", d.ID, d.Name)
 
+		
+if err != nil {
+    return fmt.Errorf("Unable to fetch data | %v", err)
+}
+
+		// Save into database
 		newData := &pollData.AccommodationItem{
 			ID:          d.ID,
 			Name:        d.Name,
 			Description: d.Description,
 			Price:       d.Price,
-			ImageURL:    d.ImageURL, // Assuming ImageURL is the correct field
+			ImageURL:    d.ImageURL, // Use ImageURL instead of Imageurl
 			Comments:    d.Comments,
 		}
 
 		_, err = s.pollMysql.Save(ctx, *newData)
 		if err != nil {
-			log.Printf("Error saving data: %v", err)
+			log.Printf("Err: %s", err)
 		}
 	}
 	return nil
