@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	           "github.com/anamliz/Haven/internal/domains/client/polldata"
-	            "github.com/anamliz/Haven/internal/domains/pollData"
+	              "github.com/anamliz/Haven/internal/domains/client/polldata"
+	              "github.com/anamliz/Haven/internal/domains/pollData"
 	pollDataMysql "github.com/anamliz/Haven/internal/domains/pollData/pollDataMysql" 
 
 )
@@ -69,25 +69,20 @@ func (s *PollDataService) PollData(ctx context.Context, pollDataEndPoint string,
 	for _, d := range data {
 		log.Printf("*** ID: %s | Name: %s ", d.ID, d.Name)
 
-		
-if err != nil {
-    return fmt.Errorf("Unable to fetch data | %v", err)
-}
-
 		// Save into database
-		newData := &pollData.AccommodationItem{
-			ID:          d.ID,
-			Name:        d.Name,
-			Description: d.Description,
-			Price:       d.Price,
-			ImageURL:    d.ImageURL, // Use ImageURL instead of Imageurl
-			Comments:    d.Comments,
+		data, err := pollData.NewPollData(d.Name, d.Description, d.Price, d.ImageURL, d.Comments)
+		if err != nil {
+			log.Printf("Err : %s", err)
+		} else {
+
+			_, err = s.pollMysql.Save(ctx, *data)
+			if err != nil {
+				log.Printf("Err : %s", err)
+			}
 		}
 
-		_, err = s.pollMysql.Save(ctx, *newData)
-		if err != nil {
-			log.Printf("Err: %s", err)
-		}
 	}
+
 	return nil
+
 }
