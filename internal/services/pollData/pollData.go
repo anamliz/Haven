@@ -7,10 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	              "github.com/anamliz/Haven/internal/domains/client/polldata"
-	              "github.com/anamliz/Haven/internal/domains/pollData"
-	pollDataMysql "github.com/anamliz/Haven/internal/domains/pollData/pollDataMysql" 
-
+	"github.com/anamliz/Haven/internal/domains/client/polldata"
+	"github.com/anamliz/Haven/internal/domains/pollData"
+	pollDataMysql "github.com/anamliz/Haven/internal/domains/pollData/pollDataMysql"
 )
 
 // PollDataServicesConfiguration is an alias for a function that will take in a pointer to a PollDataService and modify it
@@ -63,14 +62,14 @@ func (s *PollDataService) PollData(ctx context.Context, pollDataEndPoint string,
 
 	data, err := d.GetData(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to fetch data | %v", err)
+		return fmt.Errorf("unable to fetch data | %v", err)
 	}
 
 	for _, d := range data {
 		log.Printf("*** ID: %s | Name: %s ", d.ID, d.Name)
 
 		// Save into database
-		data, err := pollData.NewPollData(d.Name, d.Description, d.Price, d.ImageURL, d.Comments)
+		data, err := pollData.NewPollData(d.ID,d.Name, d.Description, d.Price, d.ImageURL, d.Comments)
 		if err != nil {
 			log.Printf("Err : %s", err)
 		} else {
