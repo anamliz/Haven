@@ -66,17 +66,20 @@ func (s *PollDataService) PollData(ctx context.Context, pollDataEndPoint string,
 	}
 
 	for _, d := range data {
-		log.Printf("*** ID: %s | Name: %s ", d.ID, d.Name)
+		log.Printf("*** Name: %s | Description: %s | Price : %s |ImageURL : %s", d.Name, d.Description, d.Price, d.ImageURL)
 
 		// Save into database
-		data, err := pollData.NewPollData(d.ID,d.Name, d.Description, d.Price, d.ImageURL, d.Comments)
+		data, err := pollData.NewPollData(d.Name, d.Description, d.Price, d.ImageURL, d.Comments)
 		if err != nil {
 			log.Printf("Err : %s", err)
 		} else {
 
 			_, err = s.pollMysql.Save(ctx, *data)
 			if err != nil {
-				log.Printf("Err : %s", err)
+				//log.Printf("Err : %s", err)
+				log.Printf("Error saving data to MySQL: %v", err)
+			} else {
+				log.Printf("Data saved successfully to MySQL")
 			}
 		}
 

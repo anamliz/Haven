@@ -2,7 +2,8 @@
 
 {
     "mySQL": {
-        "live": "root:''@tcp(127.0.0.1)/ultisoftech?charset=utf8"
+        "live": "root:@tcp(127.0.0.1)/ultisoftech?charset=utf8"
+        
     },
     "log_setting":{
         "MaxSize":"100000",
@@ -13,6 +14,14 @@
     "poll_data":{
         "logs":"/var/log/Haven/poll_data/info.log",
         "url":"http://127.0.0.1/phalc/accommodation",
-        "timeouts":"7"
+        "timeouts":"7",
+
+        "endpoints": {
+            "get": "http://127.0.0.1/phalc/accommodation",
+            "post": "http://127.0.0.1/phalc/accommodation",
+            "put": "http://127.0.0.1/phalc/accommodation/:id",
+            "delete": "http://127.0.0.1/phalc/accommodation/:id"
+        }
     }
+    
 }
