@@ -73,3 +73,37 @@ func (mr *MysqlRepository) Get(ctx context.Context) ([]pollDataTypes.Accommodati
 
 	return gc, nil
 }
+
+
+
+// FetchByID fetches data from the database by ID.
+func (m *MysqlRepository) FetchByID(ctx context.Context, id int) (*pollDataTypes.Accommodation, error) {
+	// Implementation for fetching data by ID from MySQL
+	var data pollDataTypes.Accommodation
+	query := `SELECT id, name, description, price, imageurl, comments, created_at, updated_at FROM accommodations WHERE id = ?`
+	err := m.db.QueryRowContext(ctx, query, id).Scan(
+		&data.ID, &data.Name, &data.Description, &data.Price, &data.ImageURL, &data.Comments, &data.CreatedAt, &data.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
+
+// Update updates data in the database.
+func (m *MysqlRepository) Update(ctx context.Context, id int, newData pollDataTypes.Accommodation) error {
+	query := `UPDATE accommodations SET name=?, description=?, price=?, imageurl=?, comments=?, updated_at=? WHERE id=?`
+	_, err := m.db.ExecContext(ctx, query, newData.Name, newData.Description, newData.Price, newData.ImageURL, newData.Comments, newData.UpdatedAt, id)
+	return err
+}
+
+
+
+func (mr *MysqlRepository) Delete(ctx context.Context, id int) error {
+    _, err := mr.db.Exec("DELETE FROM accommodation WHERE id = ?", id)
+    if err != nil {
+        return fmt.Errorf("unable to delete Accommodation: %v", err)
+    }
+    return nil
+}

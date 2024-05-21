@@ -10,6 +10,7 @@ import (
 	"github.com/anamliz/Haven/internal/domains/client/polldata"
 	"github.com/anamliz/Haven/internal/domains/pollData"
 	pollDataMysql "github.com/anamliz/Haven/internal/domains/pollData/pollDataMysql"
+	"github.com/anamliz/Haven/internal/domains/pollDataTypes"
 )
 
 // PollDataServicesConfiguration is an alias for a function that will take in a pointer to a PollDataService and modify it
@@ -87,4 +88,44 @@ func (s *PollDataService) PollData(ctx context.Context, pollDataEndPoint string,
 
 	return nil
 
+}
+
+// Update updates an accommodation in the database.
+func (s *PollDataService) Update(ctx context.Context, id int, newData pollDataTypes.Accommodation) error {
+	// Fetch the existing data from the database based on the provided ID.
+	existingData, err := s.pollMysql.FetchByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Update the fields of the existing data with the new data.
+	existingData.Name = newData.Name
+	existingData.Description = newData.Description
+	existingData.Price = newData.Price
+	existingData.ImageURL = newData.ImageURL
+	existingData.Comments = newData.Comments
+	existingData.UpdatedAt = time.Now().Format(time.RFC3339)
+
+	// Save the updated data back to the database.
+	err = s.pollMysql.Update(ctx, id, *existingData)
+	if err != nil {
+		return err
+	}
+
+	// Log the successful update.
+	log.Printf("Data with ID %d updated successfully: %+v", id, existingData)
+
+	return nil
+}
+
+// DeleteAccommodation deletes accommodation by ID.
+func (s *PollDataService) DeleteAccommodation(ctx context.Context, id int) error {
+	err := s.pollMysql.Delete(ctx, id)
+	if err != nil {
+		log.Printf("Error deleting accommodation with ID %d: %v", id, err)
+		return fmt.Errorf("failed to delete accommodation: %v", err)
+	}
+
+	log.Printf("Accommodation with ID %d deleted successfully", id)
+	return nil
 }
