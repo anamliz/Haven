@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"strings" 
 
 	"github.com/anamliz/Haven/internal/domains/pollData"
 	"github.com/anamliz/Haven/internal/domains/pollDataTypes"
@@ -71,6 +72,49 @@ func (s *PollDataClient) GetData(ctx context.Context) ([]pollDataTypes.Accommoda
 	return nil, fmt.Errorf("failed to get data: status: %d", response.StatusCode)
 }
 
+//
+
+func (s *PollDataClient) Update(ctx context.Context, id string, updatedData pollDataTypes.Accommodation) error {
+    pollDataURL := fmt.Sprintf("%s/%s", s.pollDataEndPoint, id)
+    jsonData, err := json.Marshal(updatedData)
+    if err != nil {
+        return fmt.Errorf("failed to marshal updated data: %v", err)
+    }
+    req, err := http.NewRequestWithContext(ctx, http.MethodPut, pollDataURL, strings.NewReader(string(jsonData)))
+    if err != nil {
+        return fmt.Errorf("failed to create update request: %v", err)
+    }
+    req.Header.Set("Content-Type", "application/json")
+    response, err := s.client.Do(req)
+    if err != nil {
+        return fmt.Errorf("failed to call update API: %v", err)
+    }
+    defer response.Body.Close()
+    if response.StatusCode != http.StatusOK {
+        return fmt.Errorf("failed to update data: status: %d", response.StatusCode)
+    }
+    return nil
+}
+
+func (s *PollDataClient) Delete(ctx context.Context, id string) error {
+    pollDataURL := fmt.Sprintf("%s/%s", s.pollDataEndPoint, id)
+    req, err := http.NewRequestWithContext(ctx, http.MethodDelete, pollDataURL, nil)
+    if err != nil {
+        return fmt.Errorf("failed to create delete request: %v", err)
+    }
+    response, err := s.client.Do(req)
+    if err != nil {
+        return fmt.Errorf("failed to call delete API: %v", err)
+    }
+    defer response.Body.Close()
+    if response.StatusCode != http.StatusOK {
+        return fmt.Errorf("failed to delete data: status: %d", response.StatusCode)
+    }
+    return nil
+}
+
+
+//
 // parseApiData parses the JSON response into Accommodation.
 func parseApiData(content []byte) ([]pollDataTypes.Accommodation, error) {
 	var g []pollDataTypes.Accommodation
@@ -104,6 +148,7 @@ func parseApiData(content []byte) ([]pollDataTypes.Accommodation, error) {
 
 	return g, nil
 }
+
 
 var defaultHTTPClient = &http.Client{
 	Timeout: time.Second * 15,

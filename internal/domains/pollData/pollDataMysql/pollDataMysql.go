@@ -3,7 +3,9 @@ package pollDataMysql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/anamliz/Haven/internal/domains/pollData"
@@ -60,7 +62,7 @@ func (mr *MysqlRepository) Get(ctx context.Context) ([]pollDataTypes.Accommodati
 	}
 	for raws.Next() {
 		var g pollDataTypes.Accommodation
-		err := raws.Scan(&g.ID, &g.Name, &g.Description, &g.Price, &g.ImageURL, &g.Comments)
+		err := raws.Scan(&g.ID, &g.Name, &g.Description, &g.Price, &g.ImageURL, &g.Comments, &g.CreatedAt, &g.UpdatedAt)
 		if err != nil {
 			return gc, err
 		}
@@ -74,36 +76,51 @@ func (mr *MysqlRepository) Get(ctx context.Context) ([]pollDataTypes.Accommodati
 	return gc, nil
 }
 
+// FetchByID retrieves poll data from the database based on the provided ID.
+func (mr *MysqlRepository) FetchByID(ctx context.Context, id int) (*pollDataTypes.Accommodation, error) {
+	// Database query to fetch data based on ID
+	
+	row := mr.db.QueryRowContext(ctx, "SELECT * FROM accommodation WHERE id = ?", id)
 
-
-// FetchByID fetches data from the database by ID.
-func (m *MysqlRepository) FetchByID(ctx context.Context, id int) (*pollDataTypes.Accommodation, error) {
-	// Implementation for fetching data by ID from MySQL
+	// Scan the query result into a struct
 	var data pollDataTypes.Accommodation
-	query := `SELECT id, name, description, price, imageurl, comments, created_at, updated_at FROM accommodations WHERE id = ?`
-	err := m.db.QueryRowContext(ctx, query, id).Scan(
-		&data.ID, &data.Name, &data.Description, &data.Price, &data.ImageURL, &data.Comments, &data.CreatedAt, &data.UpdatedAt,
-	)
+	err := row.Scan(&data.ID, &data.Name, &data.Description, &data.Price, &data.ImageURL, &data.Comments, &data.CreatedAt, &data.UpdatedAt)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("No data found for ID: %d", id)
+			return nil, nil // Return nil if no data found, without error
+		}
+		log.Printf("Error fetching data for ID: %d, error: %v", id, err)
 		return nil, err
 	}
+
 	return &data, nil
 }
 
+// Update updates the poll data in the database based on the provided ID.
+func (mr *MysqlRepository) Update(ctx context.Context, id int, newData pollDataTypes.Accommodation) error {
+	// Database query to update data based on ID
+	// Example query: UPDATE accommodation SET name = ?, description = ?, price = ?, imageurl = ?, comments = ? WHERE id = ?
+	_, err := mr.db.ExecContext(ctx, "UPDATE accommodation SET name = ?, description = ?, price = ?, imageurl = ?, comments = ? WHERE id = ?",
+		newData.Name, newData.Description, newData.Price, newData.ImageURL, newData.Comments, id)
+	if err != nil {
+		log.Printf("Error updating data for ID: %d, error: %v", id, err)
+		return err
+	}
 
-// Update updates data in the database.
-func (m *MysqlRepository) Update(ctx context.Context, id int, newData pollDataTypes.Accommodation) error {
-	query := `UPDATE accommodations SET name=?, description=?, price=?, imageurl=?, comments=?, updated_at=? WHERE id=?`
-	_, err := m.db.ExecContext(ctx, query, newData.Name, newData.Description, newData.Price, newData.ImageURL, newData.Comments, newData.UpdatedAt, id)
-	return err
+	log.Printf("Data updated successfully for ID: %d", id)
+	return nil
 }
 
-
-
 func (mr *MysqlRepository) Delete(ctx context.Context, id int) error {
-    _, err := mr.db.Exec("DELETE FROM accommodation WHERE id = ?", id)
-    if err != nil {
-        return fmt.Errorf("unable to delete Accommodation: %v", err)
-    }
-    return nil
+	// Database query to delete data based on ID
+	// Example query: DELETE FROM accommodation WHERE id = ?
+	_, err := mr.db.ExecContext(ctx, "DELETE FROM accommodation WHERE id = ?", id)
+	if err != nil {
+		log.Printf("Error deleting data for ID: %d, error: %v", id, err)
+		return err
+	}
+
+	log.Printf("Data deleted successfully for ID: %d", id)
+	return nil
 }

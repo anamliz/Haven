@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/anamliz/Haven/internal/domains/client/polldata"
+	"github.com/anamliz/Haven/internal/domains/pollDataTypes"
 	"github.com/anamliz/Haven/internal/domains/pollData"
 	pollDataMysql "github.com/anamliz/Haven/internal/domains/pollData/pollDataMysql"
-	"github.com/anamliz/Haven/internal/domains/pollDataTypes"
 )
 
 // PollDataServicesConfiguration is an alias for a function that will take in a pointer to a PollDataService and modify it
@@ -90,42 +90,56 @@ func (s *PollDataService) PollData(ctx context.Context, pollDataEndPoint string,
 
 }
 
-// Update updates an accommodation in the database.
-func (s *PollDataService) Update(ctx context.Context, id int, newData pollDataTypes.Accommodation) error {
-	// Fetch the existing data from the database based on the provided ID.
-	existingData, err := s.pollMysql.FetchByID(ctx, id)
-	if err != nil {
-		return err
-	}
+// Post is used to create new poll data and save it to the database.
+func (s *PollDataService) Post(ctx context.Context, newData pollDataTypes.Accommodation) (int, error) {
+    log.Printf("Starting creation of new accommodation data")
 
-	// Update the fields of the existing data with the new data.
-	existingData.Name = newData.Name
-	existingData.Description = newData.Description
-	existingData.Price = newData.Price
-	existingData.ImageURL = newData.ImageURL
-	existingData.Comments = newData.Comments
-	existingData.UpdatedAt = time.Now().Format(time.RFC3339)
+    // Save the new data into the database
+    lastInsertedID, err := s.pollMysql.Save(ctx, newData)
+    if err != nil {
+        log.Printf("Error saving new data to MySQL: %v", err)
+        return 0, err
+    }
 
-	// Save the updated data back to the database.
-	err = s.pollMysql.Update(ctx, id, *existingData)
-	if err != nil {
-		return err
-	}
-
-	// Log the successful update.
-	log.Printf("Data with ID %d updated successfully: %+v", id, existingData)
-
-	return nil
+    log.Printf("New data created successfully with ID: %d", lastInsertedID)
+    return lastInsertedID, nil
 }
 
-// DeleteAccommodation deletes accommodation by ID.
-func (s *PollDataService) DeleteAccommodation(ctx context.Context, id int) error {
-	err := s.pollMysql.Delete(ctx, id)
-	if err != nil {
-		log.Printf("Error deleting accommodation with ID %d: %v", id, err)
-		return fmt.Errorf("failed to delete accommodation: %v", err)
-	}
 
-	log.Printf("Accommodation with ID %d deleted successfully", id)
-	return nil
+func (s *PollDataService) Update(ctx context.Context, id int, newData pollDataTypes.Accommodation) error {
+    log.Printf("Starting update for accommodation with ID: %d", id)
+
+    existingData, err := s.pollMysql.FetchByID(ctx, id)
+    if err != nil {
+        log.Printf("Failed to fetch existing data for ID: %d, error: %v", id, err)
+        return err
+    }
+
+    existingData.Name = newData.Name
+    existingData.Description = newData.Description
+    existingData.Price = newData.Price
+    existingData.ImageURL = newData.ImageURL
+    existingData.Comments = newData.Comments
+
+    err = s.pollMysql.Update(ctx, id, *existingData)
+    if err != nil {
+        log.Printf("Update failed for accommodation with ID: %d, error: %v", id, err)
+        return err
+    }
+
+    log.Printf("Update successful for accommodation with ID: %d", id)
+    return nil
+}
+
+func (s *PollDataService) Delete(ctx context.Context, id int) error {
+    log.Printf("Starting delete for accommodation with ID: %d", id)
+
+    err := s.pollMysql.Delete(ctx, id)
+    if err != nil {
+        log.Printf("Delete failed for accommodation with ID: %d, error: %v", id, err)
+        return err
+    }
+
+    log.Printf("Delete successful for accommodation with ID: %d", id)
+    return nil
 }
